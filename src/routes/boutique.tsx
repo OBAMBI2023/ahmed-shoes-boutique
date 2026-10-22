@@ -6,13 +6,13 @@ import { PageTitle, ProductCard } from "@/components/shop";
 import { seo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
-type S = { q?: string; cat?: string; size?: number };
+type S = { q?: string | undefined; cat?: string | undefined; size?: number | undefined };
 
 export const Route = createFileRoute("/boutique")({
   validateSearch: (s: Record<string, unknown>): S => ({
-    q: typeof s.q === "string" && s.q ? s.q : undefined,
-    cat: typeof s.cat === "string" && s.cat ? s.cat : undefined,
-    size: s.size ? Number(s.size) || undefined : undefined,
+    q: typeof s["q"] === "string" && s["q"] ? s["q"] : undefined,
+    cat: typeof s["cat"] === "string" && s["cat"] ? s["cat"] : undefined,
+    size: s["size"] ? Number(s["size"]) || undefined : undefined,
   }),
   head: () => seo("Boutique", "Parcourez toute la collection AHMED SHOES : filtrez par catégorie et par pointure."),
   component: Boutique,

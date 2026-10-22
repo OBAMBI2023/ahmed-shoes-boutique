@@ -123,7 +123,7 @@ export function ProductCard({ p }: { p: Product }) {
   );
 }
 
-export function PageTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+export function PageTitle({ title, subtitle }: { title: string; subtitle?: string | undefined }) {
   return (
     <div className="mb-6">
       <h1 className="text-4xl font-semibold md:text-5xl">{title}</h1>

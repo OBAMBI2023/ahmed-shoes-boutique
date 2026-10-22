@@ -3,7 +3,7 @@ import { ArrowLeft, Check, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { formatFCFA, getProduct, PRODUCTS, SIZES } from "@/lib/products";
 import { FavButton, ProductCard } from "@/components/shop";
-import { useStore } from "@/lib/store";
+import { MAX_QTY, useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/produit/$id")({
@@ -82,7 +82,7 @@ function ProductPage() {
             <div className="flex items-center gap-3 rounded-full border border-border bg-card px-2 py-1.5">
               <button onClick={() => setQty(Math.max(1, qty - 1))} aria-label="Moins" className="grid h-8 w-8 place-items-center rounded-full bg-secondary"><Minus className="h-3.5 w-3.5" /></button>
               <span className="w-5 text-center text-sm font-bold">{qty}</span>
-              <button onClick={() => setQty(qty + 1)} aria-label="Plus" className="grid h-8 w-8 place-items-center rounded-full bg-secondary"><Plus className="h-3.5 w-3.5" /></button>
+              <button onClick={() => setQty(Math.min(MAX_QTY, qty + 1))} disabled={qty >= MAX_QTY} aria-label="Plus" className="grid h-8 w-8 place-items-center rounded-full bg-secondary disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
             </div>
             <button onClick={add} className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98]">
               {added ? <><Check className="h-4 w-4" /> Ajouté au panier</> : "Ajouter au panier"}

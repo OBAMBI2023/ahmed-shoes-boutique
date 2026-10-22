@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { getProduct } from "./products";
 
-export type CartItem = { id: string; size: number; qty: number };
+export const MAX_QTY = 10;
+
+export type CartItem ={ id: string; size: number; qty: number };
 
 type Store = {
   cart: CartItem[];
@@ -20,37 +22,76 @@ const Ctx = createContext<Store | null>(null);
 const CART_KEY = "ahmed-shoes-cart";
 const FAV_KEY = "ahmed-shoes-favorites";
 
+function readJSON(key: string): unknown {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeJSON(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // stockage indisponible (navigation privée, quota) : on garde l'état en mémoire
+  }
+}
+
+// Ne garde que les lignes valides : produit existant, pointure proposée, quantité entière positive.
+function sanitizeCart(raw: unknown): CartItem[] {
+  if (!Array.isArray(raw)) return [];
+  const merged: CartItem[] = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object") continue;
+    const { id, size, qty } = row as Record<string, unknown>;
+    if (typeof id !== "string" || typeof size !== "number" || typeof qty !== "number") continue;
+    if (!Number.isInteger(qty) || qty <= 0) continue;
+    if (!getProduct(id)?.sizes.includes(size)) continue;
+    const ex = merged.find((i) => i.id === id && i.size === size);
+    if (ex) ex.qty = Math.min(MAX_QTY, ex.qty + qty);
+    else merged.push({ id, size, qty: Math.min(MAX_QTY, qty) });
+  }
+  return merged;
+}
+
+function sanitizeFavorites(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.filter((x): x is string => typeof x === "string" && !!getProduct(x)))];
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      setCart(JSON.parse(localStorage.getItem(CART_KEY) || "[]"));
-      setFavorites(JSON.parse(localStorage.getItem(FAV_KEY) || "[]"));
-    } catch {}
+    setCart(sanitizeCart(readJSON(CART_KEY)));
+    setFavorites(sanitizeFavorites(readJSON(FAV_KEY)));
     setLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (loaded) localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    if (loaded) writeJSON(CART_KEY, cart);
   }, [cart, loaded]);
   useEffect(() => {
-    if (loaded) localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
+    if (loaded) writeJSON(FAV_KEY, favorites);
   }, [favorites, loaded]);
 
   const addToCart = (id: string, size: number, qty = 1) =>
     setCart((c) => {
       const ex = c.find((i) => i.id === id && i.size === size);
-      if (ex) return c.map((i) => (i === ex ? { ...i, qty: i.qty + qty } : i));
-      return [...c, { id, size, qty }];
+      if (ex) return c.map((i) => (i === ex ? { ...i, qty: Math.min(MAX_QTY, i.qty + qty) } : i));
+      return [...c, { id, size, qty: Math.min(MAX_QTY, qty) }];
     });
   const setQty = (id: string, size: number, qty: number) =>
     setCart((c) =>
       qty <= 0
         ? c.filter((i) => !(i.id === id && i.size === size))
-        : c.map((i) => (i.id === id && i.size === size ? { ...i, qty } : i)),
+        : c.map((i) =>
+            i.id === id && i.size === size ? { ...i, qty: Math.min(MAX_QTY, qty) } : i,
+          ),
     );
   const removeFromCart = (id: string, size: number) => setQty(id, size, 0);
   const clearCart = () => setCart([]);

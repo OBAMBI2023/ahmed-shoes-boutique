@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { formatFCFA, getProduct } from "@/lib/products";
 import { EmptyState, PageTitle } from "@/components/shop";
-import { deliveryFor, useStore } from "@/lib/store";
+import { deliveryFor, MAX_QTY, useStore } from "@/lib/store";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/panier")({
@@ -48,7 +48,7 @@ function Panier() {
                   <div className="flex items-center gap-2 rounded-full bg-secondary px-1 py-1">
                     <button onClick={() => setQty(i.id, i.size, i.qty - 1)} aria-label="Moins" className="grid h-6 w-6 place-items-center rounded-full bg-card"><Minus className="h-3 w-3" /></button>
                     <span className="w-4 text-center text-xs font-bold">{i.qty}</span>
-                    <button onClick={() => setQty(i.id, i.size, i.qty + 1)} aria-label="Plus" className="grid h-6 w-6 place-items-center rounded-full bg-card"><Plus className="h-3 w-3" /></button>
+                    <button onClick={() => setQty(i.id, i.size, i.qty + 1)} disabled={i.qty >= MAX_QTY} aria-label="Plus" className="grid h-6 w-6 place-items-center rounded-full bg-card disabled:opacity-40"><Plus className="h-3 w-3" /></button>
                   </div>
                 </div>
               </li>
